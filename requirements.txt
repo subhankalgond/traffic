@@ -1,0 +1,6 @@
+Flask>=3.0,<4.0
+opencv-python>=4.8
+numpy>=1.24
+requests>=2.28
+inference-sdk>=1.7
+gunicorn>=21.2

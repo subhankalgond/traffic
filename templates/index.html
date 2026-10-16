@@ -1,0 +1,1962 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Transit Dispatch — Autonomous Priority Preemption System</title>
+  <meta name="description" content="Editorial dashboard for computer vision ambulance priority traffic management and optical preemption.">
+  
+  <!-- Modern Editorial & Monospace Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+  <style>
+    /* =========================================================
+       EDITORIAL DESIGN SYSTEM: BLACK & WHITE FOUNDATION
+       ========================================================= */
+    :root {
+      /* Light Paper Theme (Default) */
+      --bg-page: #fbfbfb;
+      --bg-surface: #ffffff;
+      --bg-surface-alt: #f3f3f5;
+      --bg-subtle: #eaeaea;
+      --ink: #0a0a0c;
+      --ink-secondary: #4a4a52;
+      --ink-muted: #737380;
+      --ink-faint: #a1a1aa;
+      --border-stark: #0a0a0c;
+      --border-subtle: #e4e4e7;
+      --border-hairline: rgba(10, 10, 12, 0.12);
+      
+      /* Signal Lighting Accents within B&W Chassis */
+      --signal-housing: #121214;
+      --signal-visor: #08080a;
+      --signal-inactive: rgba(255, 255, 255, 0.08);
+      --signal-red-glow: #e52e2e;
+      --signal-amber-glow: #f59e0b;
+      --signal-green-glow: #059669;
+      
+      --font-serif: "Newsreader", Georgia, serif;
+      --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: "Space Mono", Consolas, "Courier New", monospace;
+      
+      --transition-fast: 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      --transition-smooth: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Obsidian Editorial Dark Mode */
+    [data-theme="dark"] {
+      --bg-page: #09090b;
+      --bg-surface: #111113;
+      --bg-surface-alt: #18181b;
+      --bg-subtle: #202024;
+      --ink: #fcfcfc;
+      --ink-secondary: #c4c4cc;
+      --ink-muted: #8e8e99;
+      --ink-faint: #52525b;
+      --border-stark: #fcfcfc;
+      --border-subtle: #27272a;
+      --border-hairline: rgba(252, 252, 252, 0.16);
+      
+      --signal-housing: #050507;
+      --signal-visor: #000000;
+      --signal-inactive: rgba(255, 255, 255, 0.06);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-page);
+      color: var(--ink);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      transition: background-color var(--transition-smooth), color var(--transition-smooth);
+    }
+
+    /* =========================================================
+       EDITORIAL MASTHEAD & TOP BULLETIN
+       ========================================================= */
+    .top-bulletin {
+      border-bottom: 1px solid var(--border-subtle);
+      background-color: var(--bg-surface);
+      padding: 7px 2rem;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      color: var(--ink-secondary);
+    }
+
+    .bulletin-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .bulletin-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 8px;
+      border: 1px solid var(--border-hairline);
+      background-color: var(--bg-surface-alt);
+      border-radius: 2px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .pulsing-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: var(--ink);
+      display: inline-block;
+      animation: pulse 1.8s infinite ease-in-out;
+    }
+
+    .pulsing-dot.active-alert {
+      background-color: var(--signal-red-glow);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; transform: scale(0.85); }
+      50% { opacity: 1; transform: scale(1.15); }
+    }
+
+    .theme-toggle-btn, .audio-toggle-btn {
+      background: none;
+      border: 1px solid var(--border-stark);
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 9px;
+      text-transform: uppercase;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      transition: all var(--transition-fast);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .theme-toggle-btn:hover, .audio-toggle-btn:hover {
+      background-color: var(--ink);
+      color: var(--bg-surface);
+    }
+
+    /* Masthead Main Container */
+    .masthead-wrapper {
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 2.2rem 2rem 1.4rem;
+    }
+
+    .masthead-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-bottom: 0.8rem;
+      border-bottom: 3px solid var(--border-stark);
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .masthead-edition {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+
+    .masthead-title {
+      font-family: var(--font-serif);
+      font-size: clamp(2.4rem, 4.8vw, 4.4rem);
+      font-weight: 700;
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
+      color: var(--ink);
+      margin: 0.4rem 0 0.2rem;
+    }
+
+    .masthead-subtitle {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: clamp(1rem, 1.4vw, 1.25rem);
+      color: var(--ink-secondary);
+      max-width: 680px;
+      line-height: 1.35;
+    }
+
+    .masthead-meta {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      line-height: 1.6;
+      text-align: right;
+      color: var(--ink-secondary);
+    }
+
+    .editorial-rule-double {
+      border-top: 1px solid var(--border-stark);
+      margin-top: 4px;
+      padding-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+
+    /* =========================================================
+       MAIN BROADSHEET EDITORIAL GRID
+       ========================================================= */
+    .broadsheet-grid {
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 0 2rem 3rem;
+      display: grid;
+      grid-template-columns: minmax(0, 1.65fr) minmax(380px, 1fr);
+      gap: 2.2rem;
+      align-items: start;
+    }
+
+    /* Panel Articles */
+    .editorial-col {
+      display: flex;
+      flex-direction: column;
+      gap: 2.2rem;
+    }
+
+    .editorial-panel {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-stark);
+      padding: 1.6rem;
+      position: relative;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      border-bottom: 1px solid var(--border-stark);
+      padding-bottom: 0.75rem;
+      margin-bottom: 1.4rem;
+    }
+
+    .panel-numeral {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+
+    .panel-headline {
+      font-family: var(--font-serif);
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+
+    .panel-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 2px 7px;
+      border: 1px solid var(--border-stark);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background-color: var(--bg-surface);
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .panel-badge.inverted {
+      background-color: var(--ink);
+      color: var(--bg-surface);
+    }
+
+    /* =========================================================
+       FIGURE 01: OPTICAL SURVEILLANCE MATRIX
+       ========================================================= */
+    .viewport-chassis {
+      position: relative;
+      background-color: #000000;
+      border: 1px solid var(--border-stark);
+      overflow: hidden;
+      aspect-ratio: 16 / 9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .viewport-stream {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      background-color: #050505;
+    }
+
+    /* Tactical Optical Overlays */
+    .hud-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 14px 16px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.85);
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    }
+
+    .hud-corner {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border-color: rgba(255, 255, 255, 0.85);
+      border-style: solid;
+      pointer-events: none;
+    }
+    .hud-tl { top: 12px; left: 12px; border-width: 2px 0 0 2px; }
+    .hud-tr { top: 12px; right: 12px; border-width: 2px 2px 0 0; }
+    .hud-bl { bottom: 12px; left: 12px; border-width: 0 0 2px 2px; }
+    .hud-br { bottom: 12px; right: 12px; border-width: 0 2px 2px 0; }
+
+    .hud-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .hud-badge-rec {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 3px 8px;
+      border-radius: 2px;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .hud-badge-rec .rec-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #ff3333;
+      animation: pulse 1.2s infinite ease-in-out;
+    }
+
+    .hud-bottom-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .hud-status-banner {
+      background: rgba(0, 0, 0, 0.75);
+      padding: 4px 10px;
+      border-left: 3px solid #ffffff;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+    }
+
+    .hud-crosshair {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 44px;
+      height: 44px;
+      pointer-events: none;
+      opacity: 0.35;
+    }
+
+    .hud-crosshair::before, .hud-crosshair::after {
+      content: "";
+      position: absolute;
+      background-color: #ffffff;
+    }
+
+    .hud-crosshair::before {
+      top: 50%;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      transform: translateY(-50%);
+    }
+
+    .hud-crosshair::after {
+      left: 50%;
+      top: 0;
+      height: 100%;
+      width: 1px;
+      transform: translateX(-50%);
+    }
+
+    /* Figure Caption */
+    .figure-caption {
+      margin-top: 10px;
+      font-family: var(--font-serif);
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: var(--ink-secondary);
+      border-left: 2px solid var(--border-stark);
+      padding-left: 10px;
+    }
+
+    .figure-caption strong {
+      font-family: var(--font-sans);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      color: var(--ink);
+      display: inline-block;
+      margin-right: 4px;
+    }
+
+    /* =========================================================
+       FIGURE 02: SIGNAL DISPATCH CHAMBER & PHYSICAL FIXTURE
+       ========================================================= */
+    .chamber-display-row {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 1.6rem;
+      align-items: center;
+      background-color: var(--bg-surface-alt);
+      border: 1px solid var(--border-subtle);
+      padding: 1.4rem;
+    }
+
+    /* Vertical Editorial Traffic Light Chassis */
+    .traffic-fixture {
+      background: var(--signal-housing);
+      border: 2px solid var(--border-stark);
+      border-radius: 8px;
+      padding: 14px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      align-items: center;
+      box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.05), 0 8px 18px rgba(0, 0, 0, 0.15);
+      position: relative;
+    }
+
+    .traffic-fixture::before {
+      content: "TRAFFIC // MK-IV";
+      font-family: var(--font-mono);
+      font-size: 8px;
+      letter-spacing: 0.14em;
+      color: #666;
+      text-transform: uppercase;
+      margin-bottom: -4px;
+    }
+
+    .light-socket {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: var(--signal-visor);
+      border: 2px solid #28282e;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.9);
+    }
+
+    .light-lens {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: var(--signal-inactive);
+      position: relative;
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .light-lens::after {
+      content: "";
+      position: absolute;
+      top: 6px;
+      left: 10px;
+      width: 16px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      transform: rotate(-30deg);
+      opacity: 0.4;
+    }
+
+    /* Lens Active States */
+    .light-lens.red.active {
+      background: radial-gradient(circle at 35% 35%, #ff8080, #e52e2e 55%, #990000);
+      box-shadow: 0 0 24px var(--signal-red-glow), 0 0 8px #ffffff inset;
+      border-color: #ff9999;
+    }
+
+    .light-lens.yellow.active {
+      background: radial-gradient(circle at 35% 35%, #fde68a, #f59e0b 55%, #b45309);
+      box-shadow: 0 0 24px var(--signal-amber-glow), 0 0 8px #ffffff inset;
+      border-color: #fde047;
+    }
+
+    .light-lens.green.active {
+      background: radial-gradient(circle at 35% 35%, #6ee7b7, #059669 55%, #064e3b);
+      box-shadow: 0 0 26px var(--signal-green-glow), 0 0 8px #ffffff inset;
+      border-color: #a7f3d0;
+    }
+
+    /* Preemption State Description in Column */
+    .chamber-narrative {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .state-indicator-badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border: 1px solid var(--border-stark);
+      width: fit-content;
+    }
+
+    .state-headline {
+      font-family: var(--font-serif);
+      font-size: 1.8rem;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .state-subtext {
+      font-size: 13px;
+      color: var(--ink-secondary);
+      line-height: 1.45;
+    }
+
+    /* Preemption Hold Countdown Bar */
+    .hold-timer-container {
+      margin-top: 1.2rem;
+      border: 1px solid var(--border-stark);
+      background-color: var(--bg-surface);
+      padding: 10px 14px;
+    }
+
+    .hold-timer-header {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--ink-secondary);
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .hold-bar-track {
+      width: 100%;
+      height: 8px;
+      background-color: var(--bg-subtle);
+      border: 1px solid var(--border-hairline);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hold-bar-fill {
+      height: 100%;
+      width: 0%;
+      background-color: var(--ink);
+      transition: width 0.1s linear;
+    }
+
+    .hold-bar-fill.active-preempt {
+      background-color: var(--signal-green-glow);
+    }
+
+    /* =========================================================
+       FIGURE 03: TELEMETRY DATA MATRIX (4-GRID)
+       ========================================================= */
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1px;
+      background-color: var(--border-stark);
+      border: 1px solid var(--border-stark);
+      margin: 1.4rem 0;
+    }
+
+    .telemetry-cell {
+      background-color: var(--bg-surface);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 90px;
+    }
+
+    .cell-tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+
+    .cell-value {
+      font-family: var(--font-serif);
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--ink);
+      margin-top: 4px;
+      overflow-wrap: anywhere;
+    }
+
+    .cell-meta {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--ink-secondary);
+      margin-top: 4px;
+    }
+
+    /* =========================================================
+       COMMAND & DISPATCH INTERACTION CONTROLS
+       ========================================================= */
+    .controls-deck {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 1rem;
+    }
+
+    .editorial-btn {
+      width: 100%;
+      padding: 14px 18px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 2px solid var(--border-stark);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all var(--transition-fast);
+      position: relative;
+    }
+
+    .editorial-btn.primary {
+      background-color: var(--ink);
+      color: var(--bg-surface);
+    }
+
+    .editorial-btn.primary:hover {
+      background-color: var(--bg-surface);
+      color: var(--ink);
+    }
+
+    .editorial-btn.primary:active {
+      transform: translateY(1px);
+    }
+
+    .editorial-btn.secondary {
+      background-color: var(--bg-surface);
+      color: var(--ink);
+    }
+
+    .editorial-btn.secondary:hover {
+      background-color: var(--bg-surface-alt);
+      border-color: var(--ink);
+    }
+
+    .btn-key-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border: 1px solid currentColor;
+      font-size: 9px;
+      letter-spacing: 0.05em;
+      border-radius: 2px;
+      opacity: 0.8;
+    }
+
+    /* =========================================================
+       FIGURE 04: DISPATCH TELEMETRY LEDGER (AUDIT LOG)
+       ========================================================= */
+    .ledger-container {
+      border: 1px solid var(--border-stark);
+      background-color: var(--bg-surface);
+    }
+
+    .ledger-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 14px;
+      background-color: var(--bg-surface-alt);
+      border-bottom: 1px solid var(--border-stark);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .ledger-action-link {
+      background: none;
+      border: none;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      text-decoration: underline;
+      cursor: pointer;
+      color: var(--ink-secondary);
+    }
+
+    .ledger-action-link:hover {
+      color: var(--ink);
+    }
+
+    .ledger-list {
+      max-height: 240px;
+      overflow-y: auto;
+      list-style: none;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+    }
+
+    .ledger-item {
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: grid;
+      grid-template-columns: 85px 95px 1fr;
+      align-items: center;
+      gap: 12px;
+      transition: background-color var(--transition-fast);
+    }
+
+    .ledger-item:last-child {
+      border-bottom: none;
+    }
+
+    .ledger-item:hover {
+      background-color: var(--bg-surface-alt);
+    }
+
+    .ledger-time {
+      color: var(--ink-muted);
+      font-size: 10.5px;
+    }
+
+    .ledger-pill {
+      display: inline-block;
+      padding: 2px 6px;
+      font-size: 9px;
+      font-weight: 700;
+      border: 1px solid var(--border-hairline);
+      text-align: center;
+      text-transform: uppercase;
+      background-color: var(--bg-surface-alt);
+      color: var(--ink);
+    }
+
+    .ledger-pill.preempt {
+      background-color: var(--ink);
+      color: var(--bg-surface);
+      border-color: var(--ink);
+    }
+
+    .ledger-msg {
+      color: var(--ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* =========================================================
+       MONOGRAPH TECHNICAL FOOTNOTES & SPECIFICATION
+       ========================================================= */
+    .colophon-box {
+      border-top: 1px solid var(--border-stark);
+      padding-top: 1.2rem;
+      margin-top: 1rem;
+      font-size: 12px;
+      color: var(--ink-secondary);
+      line-height: 1.6;
+    }
+
+    .colophon-title {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+
+    .hardware-schematic-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+    }
+
+    .schematic-col {
+      padding: 8px;
+      border: 1px solid var(--border-hairline);
+      background-color: var(--bg-surface-alt);
+    }
+
+    .schematic-col strong {
+      display: block;
+      color: var(--ink);
+      margin-bottom: 2px;
+    }
+
+    /* =========================================================
+       FOOTER
+       ========================================================= */
+    footer.editorial-footer {
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 2rem;
+      border-top: 2px solid var(--border-stark);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--ink-muted);
+    }
+
+    /* Toast Notification */
+    .toast-banner {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background-color: var(--ink);
+      color: var(--bg-surface);
+      padding: 10px 18px;
+      border: 1px solid var(--border-stark);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+      transform: translateY(120%);
+      opacity: 0;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toast-banner.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* =========================================================
+       RESPONSIVE REFINEMENTS
+       ========================================================= */
+    @media (max-width: 1080px) {
+      .broadsheet-grid {
+        grid-template-columns: 1fr;
+        padding: 0 1.2rem 2.5rem;
+      }
+      .masthead-wrapper {
+        padding: 1.5rem 1.2rem 1rem;
+      }
+      .top-bulletin {
+        padding: 6px 1.2rem;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .chamber-display-row {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        text-align: center;
+      }
+      .state-indicator-badge {
+        margin: 0 auto;
+      }
+      .telemetry-grid {
+        grid-template-columns: 1fr;
+      }
+      .hardware-schematic-grid {
+        grid-template-columns: 1fr;
+      }
+      .ledger-item {
+        grid-template-columns: 65px 75px 1fr;
+        font-size: 10.5px;
+        gap: 6px;
+      }
+    }
+
+    /* =========================================================
+       INTAKE APERTURE TOOLBAR & CLOUD TEST CONTROLS
+       ========================================================= */
+    .intake-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding: 8px 10px;
+      background-color: var(--bg-surface-alt);
+      border: 1px solid var(--border-subtle);
+    }
+    .intake-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .intake-tab {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-hairline);
+      color: var(--ink-secondary);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 6px 11px;
+      cursor: pointer;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      transition: all var(--transition-fast);
+      border-radius: 2px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .intake-tab:hover {
+      border-color: var(--border-stark);
+      color: var(--ink);
+    }
+    .intake-tab.active {
+      background: var(--ink);
+      color: var(--bg-surface);
+      border-color: var(--border-stark);
+    }
+    .intake-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .intake-btn {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-stark);
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 6px 12px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      transition: all var(--transition-fast);
+      border-radius: 2px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .intake-btn:hover {
+      background: var(--ink);
+      color: var(--bg-surface);
+    }
+    .intake-btn.btn-active-cam {
+      background: var(--signal-green-glow);
+      color: #ffffff;
+      border-color: var(--signal-green-glow);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Top Editorial Bulletin -->
+  <aside class="top-bulletin" aria-label="System status bulletin">
+    <div class="bulletin-group">
+      <span><span class="pulsing-dot" id="systemPulse"></span> <strong id="bulletinSysStatus">SURVEILLANCE ONLINE</strong></span>
+      <span>•</span>
+      <span>FIELD PROTOCOL: <strong>LABORATORY PROTOTYPE</strong></span>
+      <span>•</span>
+      <span id="bulletinClock">00:00:00 UTC</span>
+    </div>
+    <div class="bulletin-group">
+      <button class="audio-toggle-btn" id="audioToggle" onclick="toggleAudio()" title="Toggle auditory dispatch chimes">
+        <span id="audioStatusText">AUDIO: MUTED</span>
+      </button>
+      <button class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()" title="Switch between Light Paper and Obsidian Dark">
+        <span id="themeStatusText">THEME: WHITE PAPER</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Editorial Masthead Header -->
+  <header class="masthead-wrapper">
+    <div class="masthead-top-row">
+      <div>
+        <div class="masthead-edition">VOL. IV — NO. 12 • URBAN MOBILITY &amp; INTELLIGENT TRANSIT RESEARCH</div>
+        <h1 class="masthead-title">The Transit Dispatch</h1>
+        <p class="masthead-subtitle">Autonomous Optical Priority Preemption &amp; Field Telemetry Interface for Emergency Vehicles</p>
+      </div>
+      <div class="masthead-meta">
+        <div><strong>FACILITY:</strong> RESEARCH TESTBED 01</div>
+        <div><strong>STANDARD:</strong> OPTICAL PREEMPTION (V2X)</div>
+        <div><strong>DISPATCH:</strong> LOCAL HOST (127.0.0.1:5000)</div>
+      </div>
+    </div>
+    
+    <div class="editorial-rule-double">
+      <span>FIG. MONOGRAPH // DIRECT CAMERA FEED</span>
+      <span>AUTONOMOUS CONFLICT MONITOR ACTIVE</span>
+      <span>OCTOBER 15, 2026</span>
+    </div>
+  </header>
+
+  <!-- Main Broadsheet Grid -->
+  <main class="broadsheet-grid">
+
+    <!-- LEFT COLUMN: SENSOR APERTURE & AUDIT CHRONICLE -->
+    <div class="editorial-col">
+
+      <!-- Section 01: Optical Surveillance Bay -->
+      <section class="editorial-panel" aria-labelledby="opticalFeedHeading">
+        <div class="panel-header">
+          <div>
+            <div class="panel-numeral">SECTION 01 // SENSOR APERTURE</div>
+            <h2 class="panel-headline" id="opticalFeedHeading">Live Optical Surveillance Feed</h2>
+          </div>
+          <span class="panel-badge" id="cameraPill">DEVICE CAMERA</span>
+        </div>
+
+        <!-- Sensor Intake Selector Bar -->
+        <div class="intake-toolbar">
+          <div class="intake-tabs">
+            <button type="button" class="intake-tab active" id="tabDeviceCam" onclick="switchIntakeMode('browser')">
+              <span>📷 Device Camera</span>
+            </button>
+            <button type="button" class="intake-tab" id="tabUpload" onclick="switchIntakeMode('upload')">
+              <span>📁 Upload Photo</span>
+            </button>
+            <button type="button" class="intake-tab" id="tabSampleAmbulance" onclick="triggerSample('ambulance')">
+              <span>⚡ Test: 🚑 Ambulance</span>
+            </button>
+            <button type="button" class="intake-tab" id="tabSampleCivilian" onclick="triggerSample('civilian')">
+              <span>⚡ Test: 🚗 Civilian Flow</span>
+            </button>
+            <button type="button" class="intake-tab" id="tabLegacyStream" onclick="switchIntakeMode('legacy')">
+              <span>🖥️ Local Server</span>
+            </button>
+          </div>
+
+          <div class="intake-actions" id="deviceCamControls">
+            <button type="button" class="intake-btn" id="btnToggleCam" onclick="toggleBrowserCamera()">
+              <span id="btnToggleCamText">Start Camera</span>
+            </button>
+            <button type="button" class="intake-btn" id="btnFlipCam" onclick="flipCamera()" title="Flip Front / Back Camera">
+              <span>🔄 Flip</span>
+            </button>
+          </div>
+
+          <div class="intake-actions" id="uploadControls" style="display:none;">
+            <input type="file" id="filePicker" accept="image/*" style="display:none;" onchange="handleFilePicked(event)">
+            <button type="button" class="intake-btn" onclick="document.getElementById('filePicker').click()">
+              <span>Choose Image...</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="viewport-chassis" id="viewportChassis">
+          <!-- Client-Side Browser Webcam Feed (HTML5 for Deployed Website & Mobile) -->
+          <video class="viewport-stream" id="browserVideo" autoplay playsinline muted style="display:block;"></video>
+
+          <!-- Uploaded or Benchmark Sample Image Preview -->
+          <img class="viewport-stream" id="previewImg" style="display:none;" alt="Optical Preview">
+
+          <!-- Direct OpenCV Server Stream (For Local Hardware) -->
+          <img class="viewport-stream" id="liveVideoFeed" src="/video_feed" style="display:none;" alt="Real-time optical camera feed">
+
+          <!-- Canvas for drawing AI Bounding Boxes & Confidence Badges -->
+          <canvas id="overlayCanvas" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:3;"></canvas>
+
+          <!-- Architectural HUD Viewport Elements -->
+          <div class="hud-corner hud-tl"></div>
+          <div class="hud-corner hud-tr"></div>
+          <div class="hud-corner hud-bl"></div>
+          <div class="hud-corner hud-br"></div>
+          <div class="hud-crosshair"></div>
+
+          <div class="hud-overlay" style="z-index:5;">
+            <div class="hud-top-bar">
+              <div class="hud-badge-rec">
+                <span class="rec-dot"></span>
+                <span id="hudRecLabel">REC ● APERTURE</span>
+              </div>
+              <div style="background: rgba(0,0,0,0.65); padding: 3px 8px; border-radius: 2px;">
+                <span id="hudFps">LIVE</span> // OPTICAL PREEMPTION
+              </div>
+            </div>
+
+            <div class="hud-bottom-bar">
+              <div class="hud-status-banner" id="hudDetectionStatus">
+                APERTURE SCANNING FOR EMERGENCY VEHICLE
+              </div>
+              <div style="font-size: 9px; opacity: 0.85; text-align: right;">
+                FOV: 84° HORIZONTAL<br>
+                MODEL: ambulance-wmxl5-6rgov/1
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p class="figure-caption">
+          <strong>Plate 1.0 — Real-Time Aperture Stream.</strong> Direct computer vision intake. The neural network continuously scans the scene for emergency vehicle geometry. Bounding coordinates and confidence margins are dynamically rendered upon positive class classification.
+        </p>
+      </section>
+
+      <!-- Section 02: Dispatch Telemetry Ledger (Audit Log) -->
+      <section class="editorial-panel" aria-labelledby="ledgerHeading">
+        <div class="panel-header">
+          <div>
+            <div class="panel-numeral">SECTION 02 // CHRONOLOGICAL AUDIT</div>
+            <h2 class="panel-headline" id="ledgerHeading">Dispatch Telemetry Ledger</h2>
+          </div>
+          <span class="panel-badge inverted">LIVE RECORDER</span>
+        </div>
+
+        <div class="ledger-container">
+          <div class="ledger-top-bar">
+            <span>Chronicle Record (<span id="ledgerCount">0</span> entries)</span>
+            <button class="ledger-action-link" onclick="clearLedger()">Clear Ledger</button>
+          </div>
+          <ul class="ledger-list" id="ledgerList" role="log" aria-live="polite">
+            <!-- Dynamically populated entries -->
+          </ul>
+        </div>
+
+        <div class="colophon-box">
+          <div class="colophon-title">Hardware Intercept Protocol &amp; Arduino Serial Interface</div>
+          <p>
+            When physically interfaced, the web controller bridges signal states to the microcontroller (<code style="font-family: var(--font-mono); font-weight: 700;">arduino/traffic_light_model.ino</code>) over Serial at 9600 baud. The onboard firmware controls the solid-state relays for RED, YELLOW, and GREEN channels with guaranteed minimum green safety enforcement.
+          </p>
+          <div class="hardware-schematic-grid">
+            <div class="schematic-col">
+              <strong>PIN D8: RED BEACON</strong>
+              <span>Default Civilian Halt</span>
+            </div>
+            <div class="schematic-col">
+              <strong>PIN D9: AMBER BEACON</strong>
+              <span>Transition Clearance</span>
+            </div>
+            <div class="schematic-col">
+              <strong>PIN D10: GREEN BEACON</strong>
+              <span>Emergency Preemption</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- RIGHT COLUMN: SIGNAL PREVIEW, METRICS, COMMAND CONTROLS -->
+    <div class="editorial-col">
+
+      <!-- Section 03: Signal Preemption Chamber -->
+      <section class="editorial-panel" aria-labelledby="signalChamberHeading">
+        <div class="panel-header">
+          <div>
+            <div class="panel-numeral">SECTION 03 // PREEMPTION CHAMBER</div>
+            <h2 class="panel-headline" id="signalChamberHeading">Intersection Signal State</h2>
+          </div>
+          <span class="panel-badge" id="signalBadge">NORMAL FLOW</span>
+        </div>
+
+        <div class="chamber-display-row">
+          <!-- Physical Traffic Light Representation -->
+          <div class="traffic-fixture" aria-label="Physical traffic signal preview">
+            <div class="light-socket">
+              <div class="light-lens red active" id="lightLensRed" title="Red Signal Lamp"></div>
+            </div>
+            <div class="light-socket">
+              <div class="light-lens yellow" id="lightLensYellow" title="Yellow Signal Lamp"></div>
+            </div>
+            <div class="light-socket">
+              <div class="light-lens green" id="lightLensGreen" title="Green Signal Lamp"></div>
+            </div>
+          </div>
+
+          <!-- State Explanation & Narrative -->
+          <div class="chamber-narrative">
+            <div class="state-indicator-badge" id="signalStateBadge">RED — HALT CIVILIAN TRANSIT</div>
+            <div class="state-headline" id="signalStateHeadline">Normal Transit Flow</div>
+            <p class="state-subtext" id="signalStateDescription">
+              Cross-traffic priority remains standard. The emergency preemption cycle is currently idle awaiting optical trigger or command override.
+            </p>
+          </div>
+        </div>
+
+        <!-- 10-Second Preemption Depletion Bar -->
+        <div class="hold-timer-container">
+          <div class="hold-timer-header">
+            <span>Preemption Hold Interval</span>
+            <span id="holdTimerText">STANDBY — 0.0s</span>
+          </div>
+          <div class="hold-bar-track">
+            <div class="hold-bar-fill" id="holdBarFill"></div>
+          </div>
+        </div>
+
+        <!-- 4-Grid Telemetry Matrix -->
+        <div class="telemetry-grid">
+          <div class="telemetry-cell">
+            <div class="cell-tag">01 // CLASSIFICATION</div>
+            <div class="cell-value" id="valDetected">STANDBY</div>
+            <div class="cell-meta" id="valSource">Source: Sensor</div>
+          </div>
+
+          <div class="telemetry-cell">
+            <div class="cell-tag">02 // SIGNAL BEACON</div>
+            <div class="cell-value" id="valSignal">RED</div>
+            <div class="cell-meta">Clearance Hold: 12s</div>
+          </div>
+
+          <div class="telemetry-cell">
+            <div class="cell-tag">03 // MODEL CONFIDENCE</div>
+            <div class="cell-value" id="valConfidence">—</div>
+            <div class="cell-meta">Class: "ambulance"</div>
+          </div>
+
+          <div class="telemetry-cell">
+            <div class="cell-tag">04 // OPTICAL PIPELINE</div>
+            <div class="cell-value" id="valCamera">ONLINE</div>
+            <div class="cell-meta" id="valMode">AI Inference</div>
+          </div>
+        </div>
+
+        <!-- Section 04: Command & Dispatch Controls -->
+        <div class="controls-deck">
+          <button class="editorial-btn primary" id="btnTriggerDemo" onclick="triggerDemo()" aria-label="Trigger emergency preemption">
+            <span>▲ Trigger Ambulance Override (10s)</span>
+            <span class="btn-key-badge">KEY: [SPACE] or [T]</span>
+          </button>
+
+          <button class="editorial-btn secondary" id="btnResetDemo" onclick="resetDemo()" aria-label="Reset emergency preemption">
+            <span>↺ Restore Standard Civilian Flow</span>
+            <span class="btn-key-badge">KEY: [ESC] or [R]</span>
+          </button>
+        </div>
+
+        <!-- Colophon Safety Notice -->
+        <div class="colophon-box">
+          <div class="colophon-title">Regulatory &amp; Validation Notice</div>
+          <p>
+            This software constitutes an educational testbed. Manual triggers simulate the preemption flow prior to full YOLO model integration (<code style="font-family:var(--font-mono); font-weight:700;">ambulance.pt</code>). Never connect an experimental workstation directly to municipal traffic hardware.
+          </p>
+        </div>
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- Editorial Colophon Footer -->
+  <footer class="editorial-footer">
+    <div>
+      <strong>THE TRANSIT DISPATCH</strong> — FIELD TEST PLATFORM
+    </div>
+    <div>
+      BUILT FOR RESEARCH &amp; AUTONOMOUS SAFETY VALIDATION
+    </div>
+    <div>
+      EDITION 2026.10 // REVISION 4.2
+    </div>
+  </footer>
+
+  <!-- Toast Notification -->
+  <div class="toast-banner" id="toastBanner" role="status" aria-live="polite">
+    <span class="pulsing-dot active-alert"></span>
+    <span id="toastMessage">COMMAND DISPATCHED</span>
+  </div>
+
+  <!-- Client Telemetry & Audio Dispatch Logic -->
+  <script>
+    // System State Variables
+    let audioEnabled = false;
+    let audioCtx = null;
+    let previousSignal = "RED";
+    let previousDetected = false;
+    let preemptionEndTime = 0;
+    let preemptionInterval = null;
+    const ledgerItems = [];
+
+    // Initialize Web Audio API on first user gesture
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function toggleAudio() {
+      initAudio();
+      audioEnabled = !audioEnabled;
+      const btnText = document.getElementById('audioStatusText');
+      btnText.textContent = audioEnabled ? 'AUDIO: ENABLED' : 'AUDIO: MUTED';
+      showToast(audioEnabled ? 'DISPATCH AUDIO ENABLED' : 'DISPATCH AUDIO MUTED');
+      if (audioEnabled) {
+        playBeep(880, 0.08, 'sine');
+      }
+    }
+
+    function playBeep(freq = 660, duration = 0.12, type = 'sine') {
+      if (!audioEnabled || !audioCtx) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (err) {}
+    }
+
+    function playEmergencyFanfare() {
+      if (!audioEnabled || !audioCtx) return;
+      playBeep(880, 0.1, 'triangle');
+      setTimeout(() => playBeep(1174, 0.18, 'triangle'), 110);
+    }
+
+    // Theme Toggle (White Paper vs. Obsidian Dark)
+    function toggleTheme() {
+      const html = document.documentElement;
+      const current = html.getAttribute('data-theme') || 'light';
+      const next = current === 'light' ? 'dark' : 'light';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('transit_theme', next);
+      
+      const themeText = document.getElementById('themeStatusText');
+      themeText.textContent = next === 'light' ? 'THEME: WHITE PAPER' : 'THEME: OBSIDIAN DARK';
+      showToast('THEME: ' + (next === 'light' ? 'WHITE PAPER' : 'OBSIDIAN DARK'));
+    }
+
+    // Load saved theme
+    (function initTheme() {
+      const saved = localStorage.getItem('transit_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', saved);
+      const themeText = document.getElementById('themeStatusText');
+      if (themeText) {
+        themeText.textContent = saved === 'light' ? 'THEME: WHITE PAPER' : 'THEME: OBSIDIAN DARK';
+      }
+    })();
+
+    // Clock
+    function updateClock() {
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0] + ' ' + (now.toLocaleTimeString('en-us',{timeZoneName:'short'}).split(' ')[2] || 'LOCAL');
+      document.getElementById('bulletinClock').textContent = timeStr;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Toast Banner
+    let toastTimeout;
+    function showToast(msg) {
+      const toast = document.getElementById('toastBanner');
+      const toastMsg = document.getElementById('toastMessage');
+      toastMsg.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2400);
+    }
+
+    // Dispatch Ledger Management
+    function addLedgerEntry(category, message) {
+      const now = new Date();
+      const time = now.toTimeString().split(' ')[0];
+      const entry = { time, category, message };
+      
+      ledgerItems.unshift(entry);
+      if (ledgerItems.length > 50) ledgerItems.pop();
+
+      renderLedger();
+    }
+
+    function renderLedger() {
+      const list = document.getElementById('ledgerList');
+      const count = document.getElementById('ledgerCount');
+      count.textContent = ledgerItems.length;
+
+      list.innerHTML = ledgerItems.map(item => `
+        <li class="ledger-item">
+          <span class="ledger-time">${item.time}</span>
+          <span class="ledger-pill ${item.category === 'PREEMPT' ? 'preempt' : ''}">${item.category}</span>
+          <span class="ledger-msg" title="${item.message}">${item.message}</span>
+        </li>
+      `).join('');
+    }
+
+    function clearLedger() {
+      ledgerItems.length = 0;
+      renderLedger();
+      showToast('LEDGER CLEARED');
+    }
+
+    // Initial Ledger Entry
+    addLedgerEntry('SYS', 'Transit Preemption Monitoring System initialized');
+
+    // Countdown Progress Bar for Preemption Hold
+    function startCountdown(seconds) {
+      preemptionEndTime = Date.now() + (seconds * 1000);
+      clearInterval(preemptionInterval);
+
+      const fill = document.getElementById('holdBarFill');
+      const text = document.getElementById('holdTimerText');
+      fill.classList.add('active-preempt');
+
+      preemptionInterval = setInterval(() => {
+        const remainingMs = preemptionEndTime - Date.now();
+        if (remainingMs <= 0) {
+          clearInterval(preemptionInterval);
+          fill.style.width = '0%';
+          fill.classList.remove('active-preempt');
+          text.textContent = 'STANDBY — 0.0s';
+        } else {
+          const remSec = (remainingMs / 1000).toFixed(1);
+          const pct = Math.max(0, Math.min(100, (remainingMs / (seconds * 1000)) * 100));
+          fill.style.width = pct + '%';
+          text.textContent = `PREEMPTION HOLD — ${remSec}s`;
+        }
+      }, 50);
+    }
+
+    function stopCountdown() {
+      clearInterval(preemptionInterval);
+      const fill = document.getElementById('holdBarFill');
+      const text = document.getElementById('holdTimerText');
+      fill.style.width = '0%';
+      fill.classList.remove('active-preempt');
+      text.textContent = 'STANDBY — 0.0s';
+    }
+
+    // Polling System Status from Flask API
+    async function refreshStatus() {
+      try {
+        const resp = await fetch('/api/status');
+        if (!resp.ok) return;
+        const s = await resp.json();
+
+        // 1. Camera & Aperture State
+        const camOk = !!s.camera_ok;
+        const camPill = document.getElementById('cameraPill');
+        const valCam = document.getElementById('valCamera');
+        if (camOk) {
+          camPill.textContent = 'APERTURE ONLINE';
+          camPill.className = 'panel-badge';
+          valCam.textContent = 'ONLINE';
+        } else {
+          camPill.textContent = 'APERTURE OFFLINE';
+          camPill.className = 'panel-badge inverted';
+          valCam.textContent = 'OFFLINE';
+        }
+
+        // 2. Ambulance Classification
+        const isDetected = !!s.detected;
+        const valDetected = document.getElementById('valDetected');
+        const hudStatus = document.getElementById('hudDetectionStatus');
+        const sysPulse = document.getElementById('systemPulse');
+        
+        if (isDetected) {
+          valDetected.textContent = 'DETECTED';
+          valDetected.style.color = 'var(--signal-red-glow)';
+          hudStatus.textContent = 'EMERGENCY CLASS IDENTIFIED — SIGNAL PREEMPTION TRIGGERED';
+          sysPulse.classList.add('active-alert');
+        } else {
+          valDetected.textContent = 'NOT DETECTED';
+          valDetected.style.color = 'var(--ink)';
+          hudStatus.textContent = 'APERTURE SCANNING FOR EMERGENCY VEHICLE';
+          sysPulse.classList.remove('active-alert');
+        }
+
+        // Sound alert on new detection
+        if (isDetected && !previousDetected) {
+          playEmergencyFanfare();
+          addLedgerEntry('PREEMPT', `Emergency vehicle intercepted: ${s.source || 'Optical'}`);
+          startCountdown(10);
+        }
+        previousDetected = isDetected;
+
+        // 3. Signal State & Lighting Fixture
+        const isGreen = s.signal === 'GREEN';
+        const lightRed = document.getElementById('lightLensRed');
+        const lightGreen = document.getElementById('lightLensGreen');
+        const lightYellow = document.getElementById('lightLensYellow');
+        const badge = document.getElementById('signalBadge');
+        const stateBadge = document.getElementById('signalStateBadge');
+        const headline = document.getElementById('signalStateHeadline');
+        const description = document.getElementById('signalStateDescription');
+        const valSignal = document.getElementById('valSignal');
+
+        if (isGreen) {
+          lightRed.classList.remove('active');
+          lightYellow.classList.remove('active');
+          lightGreen.classList.add('active');
+
+          badge.textContent = 'PREEMPTION ACTIVE';
+          badge.className = 'panel-badge inverted';
+          stateBadge.textContent = 'GREEN — EMERGENCY ROUTE CLEARED';
+          stateBadge.style.borderColor = 'var(--signal-green-glow)';
+          headline.textContent = 'Emergency Green Corridoring';
+          headline.style.color = 'var(--signal-green-glow)';
+          description.textContent = `Civilian traffic paused. Emergency transit granted uninterrupted right-of-way via ${s.source || 'Preemption'}.`;
+          valSignal.textContent = 'GREEN';
+        } else {
+          lightRed.classList.add('active');
+          lightYellow.classList.remove('active');
+          lightGreen.classList.remove('active');
+
+          badge.textContent = 'NORMAL FLOW';
+          badge.className = 'panel-badge';
+          stateBadge.textContent = 'RED — HALT CIVILIAN TRANSIT';
+          stateBadge.style.borderColor = 'var(--border-stark)';
+          headline.textContent = 'Normal Transit Flow';
+          headline.style.color = 'var(--ink)';
+          description.textContent = 'Cross-traffic priority remains standard. The emergency preemption cycle is currently idle awaiting optical trigger or command override.';
+          valSignal.textContent = 'RED';
+        }
+
+        if (s.signal !== previousSignal) {
+          if (s.signal === 'GREEN') {
+            addLedgerEntry('SIGNAL', 'Signal state transitioned to GREEN (Preemption)');
+          } else {
+            addLedgerEntry('SIGNAL', 'Signal state returned to RED (Standard Cycle)');
+            stopCountdown();
+          }
+          previousSignal = s.signal;
+        }
+
+        // 4. Model Confidence & Source
+        document.getElementById('valConfidence').textContent = s.confidence != null ? (s.confidence * 100).toFixed(1) + '%' : '—';
+        document.getElementById('valSource').textContent = `Source: ${s.source || 'Sensor'}`;
+        document.getElementById('valMode').textContent = s.mode ? s.mode.substring(0, 18) : 'Direct Stream';
+
+        // 5. Track Last Event
+        if (s.last_event && s.last_event !== window.lastLoggedEvent) {
+          window.lastLoggedEvent = s.last_event;
+          addLedgerEntry('EVENT', s.last_event);
+        }
+
+      } catch (err) {
+        document.getElementById('bulletinSysStatus').textContent = 'CONNECTION DROPPED';
+      }
+    }
+
+    // Manual Demo Trigger Action
+    async function triggerDemo() {
+      initAudio();
+      playEmergencyFanfare();
+      showToast('INITIATING 10s EMERGENCY OVERRIDE');
+      addLedgerEntry('OVERRIDE', 'Manual 10-second ambulance event dispatched by operator');
+      startCountdown(10);
+      try {
+        await fetch('/api/demo_trigger', { method: 'POST' });
+        refreshStatus();
+      } catch (e) {
+        showToast('DISPATCH FAILED');
+      }
+    }
+
+    // Manual Reset Action
+    async function resetDemo() {
+      initAudio();
+      playBeep(440, 0.1, 'sine');
+      showToast('RESTORING CIVILIAN TRANSIT');
+      addLedgerEntry('RESET', 'Manual override revoked by operator. Standard cycle restored.');
+      stopCountdown();
+      try {
+        await fetch('/api/reset', { method: 'POST' });
+        refreshStatus();
+      } catch (e) {
+        showToast('RESET FAILED');
+      }
+    }
+
+    // Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+      // Avoid hotkeys if typing in an input
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+      if (e.code === 'Space' || e.key.toLowerCase() === 't') {
+        e.preventDefault();
+        triggerDemo();
+      } else if (e.code === 'Escape' || e.key.toLowerCase() === 'r') {
+        e.preventDefault();
+        resetDemo();
+      }
+    });
+
+    // =========================================================
+    // INTAKE APERTURE & CLIENT-SIDE INFERENCE CONTROLLERS
+    // =========================================================
+    let activeIntakeMode = 'browser'; // 'browser', 'upload', 'sample', 'legacy'
+    let browserStream = null;
+    let cameraFacing = 'environment'; // mobile back camera by default
+    let browserInferenceTimer = null;
+    let isProcessingFrame = false;
+
+    const videoEl = document.getElementById('browserVideo');
+    const previewImg = document.getElementById('previewImg');
+    const legacyStream = document.getElementById('liveVideoFeed');
+    const overlayCanvas = document.getElementById('overlayCanvas');
+    const overlayCtx = overlayCanvas.getContext('2d');
+    const offscreenCanvas = document.createElement('canvas');
+    const offscreenCtx = offscreenCanvas.getContext('2d');
+
+    function syncCanvasDimensions(width, height) {
+      if (overlayCanvas.width !== width || overlayCanvas.height !== height) {
+        overlayCanvas.width = width;
+        overlayCanvas.height = height;
+      }
+    }
+
+    function drawBoundingBoxes(predictions, width, height) {
+      syncCanvasDimensions(width, height);
+      overlayCtx.clearRect(0, 0, width, height);
+      if (!predictions || !predictions.length) return;
+
+      for (const p of predictions) {
+        const x1 = p.x1;
+        const y1 = p.y1;
+        const boxW = p.x2 - p.x1;
+        const boxH = p.y2 - p.y1;
+
+        // Bounding box border
+        overlayCtx.lineWidth = 3;
+        overlayCtx.strokeStyle = '#059669';
+        overlayCtx.strokeRect(x1, y1, boxW, boxH);
+
+        // Semi-transparent box tint
+        overlayCtx.fillStyle = 'rgba(5, 150, 105, 0.15)';
+        overlayCtx.fillRect(x1, y1, boxW, boxH);
+
+        // Header label badge
+        const confPercent = Math.round(p.confidence * 100);
+        const text = `AMBULANCE ${confPercent}%`;
+        overlayCtx.font = 'bold 13px "Space Mono", monospace';
+        const textWidth = overlayCtx.measureText(text).width;
+
+        overlayCtx.fillStyle = '#059669';
+        overlayCtx.fillRect(x1, Math.max(0, y1 - 22), textWidth + 12, 22);
+
+        overlayCtx.fillStyle = '#ffffff';
+        overlayCtx.fillText(text, x1 + 6, Math.max(16, y1 - 6));
+      }
+    }
+
+    function switchIntakeMode(mode) {
+      activeIntakeMode = mode;
+      document.querySelectorAll('.intake-tab').forEach(t => t.classList.remove('active'));
+      overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+      const deviceControls = document.getElementById('deviceCamControls');
+      const uploadControls = document.getElementById('uploadControls');
+
+      if (mode === 'browser') {
+        document.getElementById('tabDeviceCam').classList.add('active');
+        deviceControls.style.display = 'flex';
+        uploadControls.style.display = 'none';
+        videoEl.style.display = 'block';
+        previewImg.style.display = 'none';
+        legacyStream.style.display = 'none';
+        if (!browserStream) {
+          startBrowserCamera();
+        }
+      } else if (mode === 'upload') {
+        document.getElementById('tabUpload').classList.add('active');
+        deviceControls.style.display = 'none';
+        uploadControls.style.display = 'flex';
+        videoEl.style.display = 'none';
+        previewImg.style.display = 'block';
+        legacyStream.style.display = 'none';
+        stopBrowserCamera();
+        document.getElementById('cameraPill').textContent = 'FILE INTAKE';
+        document.getElementById('cameraPill').className = 'panel-badge';
+      } else if (mode === 'legacy') {
+        document.getElementById('tabLegacyStream').classList.add('active');
+        deviceControls.style.display = 'none';
+        uploadControls.style.display = 'none';
+        videoEl.style.display = 'none';
+        previewImg.style.display = 'none';
+        legacyStream.style.display = 'block';
+        stopBrowserCamera();
+      }
+    }
+
+    async function startBrowserCamera() {
+      try {
+        if (browserStream) stopBrowserCamera();
+        const constraints = {
+          video: {
+            facingMode: cameraFacing,
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false
+        };
+        browserStream = await navigator.mediaDevices.getUserMedia(constraints);
+        videoEl.srcObject = browserStream;
+        await videoEl.play();
+
+        document.getElementById('btnToggleCamText').textContent = 'Stop Camera';
+        document.getElementById('btnToggleCam').classList.add('btn-active-cam');
+        document.getElementById('cameraPill').textContent = 'BROWSER WEBCAM';
+        document.getElementById('cameraPill').className = 'panel-badge';
+        document.getElementById('hudRecLabel').textContent = 'REC ● WEBCAM';
+
+        startBrowserInference();
+        showToast('DEVICE CAMERA ACTIVATED');
+      } catch (err) {
+        showToast('CAMERA PERMISSION DENIED OR UNAVAILABLE');
+        document.getElementById('cameraPill').textContent = 'CAMERA STANDBY';
+        document.getElementById('cameraPill').className = 'panel-badge inverted';
+      }
+    }
+
+    function stopBrowserCamera() {
+      if (browserInferenceTimer) {
+        clearInterval(browserInferenceTimer);
+        browserInferenceTimer = null;
+      }
+      if (browserStream) {
+        browserStream.getTracks().forEach(track => track.stop());
+        browserStream = null;
+      }
+      if (videoEl) videoEl.srcObject = null;
+      document.getElementById('btnToggleCamText').textContent = 'Start Camera';
+      document.getElementById('btnToggleCam').classList.remove('btn-active-cam');
+    }
+
+    function toggleBrowserCamera() {
+      if (browserStream) {
+        stopBrowserCamera();
+        document.getElementById('cameraPill').textContent = 'CAMERA PAUSED';
+        showToast('CAMERA PAUSED');
+      } else {
+        startBrowserCamera();
+      }
+    }
+
+    function flipCamera() {
+      cameraFacing = cameraFacing === 'environment' ? 'user' : 'environment';
+      if (browserStream) {
+        startBrowserCamera();
+      }
+    }
+
+    function startBrowserInference() {
+      if (browserInferenceTimer) clearInterval(browserInferenceTimer);
+      browserInferenceTimer = setInterval(async () => {
+        if (isProcessingFrame || !browserStream || videoEl.readyState < 2) return;
+        isProcessingFrame = true;
+
+        try {
+          const vw = videoEl.videoWidth || 640;
+          const vh = videoEl.videoHeight || 360;
+          offscreenCanvas.width = vw;
+          offscreenCanvas.height = vh;
+          offscreenCtx.drawImage(videoEl, 0, 0, vw, vh);
+
+          const dataUrl = offscreenCanvas.toDataURL('image/jpeg', 0.8);
+          const resp = await fetch('/api/detect_frame', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              image: dataUrl,
+              source: 'Browser Optical Sensor',
+              width: vw,
+              height: vh
+            })
+          });
+
+          if (resp.ok) {
+            const data = await resp.json();
+            drawBoundingBoxes(data.predictions, vw, vh);
+            refreshStatus();
+          }
+        } catch (e) {
+          // ignore transient frame network drops
+        } finally {
+          isProcessingFrame = false;
+        }
+      }, 550);
+    }
+
+    async function triggerSample(kind) {
+      stopBrowserCamera();
+      activeIntakeMode = 'sample';
+      document.querySelectorAll('.intake-tab').forEach(t => t.classList.remove('active'));
+      const activeTabId = kind === 'ambulance' ? 'tabSampleAmbulance' : 'tabSampleCivilian';
+      document.getElementById(activeTabId).classList.add('active');
+
+      document.getElementById('deviceCamControls').style.display = 'none';
+      document.getElementById('uploadControls').style.display = 'none';
+      videoEl.style.display = 'none';
+      legacyStream.style.display = 'none';
+      previewImg.style.display = 'block';
+
+      showToast(`FETCHING ${kind.toUpperCase()} BENCHMARK...`);
+      document.getElementById('cameraPill').textContent = `TEST: ${kind.toUpperCase()}`;
+      document.getElementById('cameraPill').className = 'panel-badge';
+      document.getElementById('hudRecLabel').textContent = `BENCHMARK ● ${kind.toUpperCase()}`;
+
+      try {
+        const sampleResp = await fetch(`/api/sample_data/${kind}`);
+        if (!sampleResp.ok) throw new Error('Sample fetch failed');
+        const sampleData = await sampleResp.json();
+
+        previewImg.src = sampleData.image;
+        await new Promise(r => previewImg.onload = r);
+
+        const nw = previewImg.naturalWidth || 640;
+        const nh = previewImg.naturalHeight || 360;
+
+        const detectResp = await fetch('/api/detect_frame', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            image: sampleData.image,
+            source: `Benchmark: ${kind}`,
+            width: nw,
+            height: nh
+          })
+        });
+
+        if (detectResp.ok) {
+          const detectData = await detectResp.json();
+          drawBoundingBoxes(detectData.predictions, nw, nh);
+          refreshStatus();
+          if (detectData.detected) {
+            showToast('EMERGENCY VEHICLE CLASSIFIED — SIGNAL GREEN');
+          } else {
+            showToast('CIVILIAN FLOW VERIFIED — SIGNAL RED');
+          }
+        }
+      } catch (err) {
+        showToast('BENCHMARK EVALUATION FAILED');
+      }
+    }
+
+    function handleFilePicked(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        stopBrowserCamera();
+        previewImg.src = e.target.result;
+        videoEl.style.display = 'none';
+        legacyStream.style.display = 'none';
+        previewImg.style.display = 'block';
+
+        showToast('ANALYZING UPLOADED IMAGE...');
+        document.getElementById('cameraPill').textContent = 'ANALYZING FILE';
+        document.getElementById('hudRecLabel').textContent = 'FILE INTAKE';
+
+        await new Promise(r => previewImg.onload = r);
+        const nw = previewImg.naturalWidth || 640;
+        const nh = previewImg.naturalHeight || 360;
+
+        try {
+          const resp = await fetch('/api/detect_frame', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              image: e.target.result,
+              source: `Upload (${file.name})`,
+              width: nw,
+              height: nh
+            })
+          });
+
+          if (resp.ok) {
+            const data = await resp.json();
+            drawBoundingBoxes(data.predictions, nw, nh);
+            refreshStatus();
+            if (data.detected) {
+              showToast('EMERGENCY VEHICLE IDENTIFIED — SIGNAL GREEN');
+            } else {
+              showToast('NO AMBULANCE DETECTED IN IMAGE');
+            }
+          }
+        } catch (err) {
+          showToast('INFERENCE REQUEST FAILED');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Start Polling Loop
+    setInterval(refreshStatus, 800);
+    refreshStatus();
+
+    // Auto-attempt device camera on first load
+    window.addEventListener('DOMContentLoaded', () => {
+      // Small timeout for smooth initial load
+      setTimeout(() => {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          startBrowserCamera();
+        }
+      }, 600);
+    });
+  </script>
+</body>
+</html>
