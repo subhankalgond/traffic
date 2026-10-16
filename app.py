@@ -15,7 +15,7 @@ CAMERA_INDEX = int(os.getenv("CAMERA_INDEX", "0"))
 ROBOFLOW_API_KEY = os.getenv("ROBOFLOW_API_KEY", "LntDwq5p2x7JvDG7GM2d").strip()
 # Exact model ID for Roboflow Deploy: project/version
 ROBOFLOW_MODEL_ID = os.getenv("ROBOFLOW_MODEL_ID", "ambulance-wmxl5-6rgov/1").strip()
-CONFIDENCE = float(os.getenv("CONFIDENCE", "0.45"))
+CONFIDENCE = float(os.getenv("CONFIDENCE", "0.25"))
 SIGNAL_HOLD_SECONDS = int(os.getenv("SIGNAL_HOLD_SECONDS", "12"))
 INFERENCE_INTERVAL_SECONDS = float(os.getenv("INFERENCE_INTERVAL_SECONDS", "0.5"))
 
@@ -81,13 +81,15 @@ def get_camera():
     return camera
 
 
-def detect_ambulance_from_b64(image_base64, width=640, height=360):
+def detect_ambulance_from_b64(image_base64, width=640, height=360, conf=None):
     """Send base64-encoded image to Roboflow hosted model and return matching bounding boxes."""
     global last_api_error_time
 
     if not ROBOFLOW_API_KEY or not ROBOFLOW_MODEL_ID:
         return []
 
+    active_conf = conf if conf is not None else CONFIDENCE
+    threshold = max(0.10, min(0.95, float(active_conf)))
     url = f"https://detect.roboflow.com/{ROBOFLOW_MODEL_ID}"
 
     try:
@@ -95,7 +97,7 @@ def detect_ambulance_from_b64(image_base64, width=640, height=360):
             url,
             params={
                 "api_key": ROBOFLOW_API_KEY,
-                "confidence": int(CONFIDENCE * 100),
+                "confidence": int(threshold * 100),
             },
             data=image_base64,
             headers={"Content-Type": "application/x-www-form-urlencoded"},
@@ -109,7 +111,7 @@ def detect_ambulance_from_b64(image_base64, width=640, height=360):
         for prediction in predictions:
             label = str(prediction.get("class", "")).lower()
             confidence = float(prediction.get("confidence", 0))
-            if "ambulance" not in label or confidence < CONFIDENCE:
+            if "ambulance" not in label or confidence < threshold:
                 continue
 
             # Roboflow object-detection responses use center x/y and width/height.
@@ -305,7 +307,10 @@ def detect_frame():
         if "," in image_data:
             image_data = image_data.split(",", 1)[1]
 
-        matches = detect_ambulance_from_b64(image_data, width=width, height=height)
+        client_conf = float(data.get("confidence", CONFIDENCE))
+        matches = detect_ambulance_from_b64(
+            image_data, width=width, height=height, conf=client_conf
+        )
         detected = bool(matches)
         best_conf = max([m["confidence"] for m in matches], default=None)
 

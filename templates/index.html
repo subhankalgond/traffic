@@ -1105,6 +1105,15 @@
               <span>Choose Image...</span>
             </button>
           </div>
+
+          <div class="intake-actions" style="margin-left:auto; display:flex; align-items:center; gap:6px;">
+            <label style="font-family: var(--font-mono); font-size: 10px; font-weight:700; text-transform:uppercase; color:var(--ink-secondary);">Sensitivity:</label>
+            <select id="confidenceSelect" onchange="onConfidenceChange(this.value)" style="background:var(--bg-surface); border:1px solid var(--border-stark); color:var(--ink); font-family:var(--font-mono); font-size:10px; font-weight:700; padding:4px 7px; border-radius:2px; cursor:pointer;">
+              <option value="0.20" selected>Screen Scan / High (20%)</option>
+              <option value="0.35">Normal Road (35%)</option>
+              <option value="0.50">Strict / Daylight (50%)</option>
+            </select>
+          </div>
         </div>
 
         <div class="viewport-chassis" id="viewportChassis">
@@ -1661,6 +1670,12 @@
     const offscreenCanvas = document.createElement('canvas');
     const offscreenCtx = offscreenCanvas.getContext('2d');
 
+    let currentConfidence = 0.20;
+    function onConfidenceChange(val) {
+      currentConfidence = parseFloat(val);
+      showToast('SENSITIVITY SET TO ' + Math.round(currentConfidence * 100) + '%');
+    }
+
     function syncCanvasDimensions(width, height) {
       if (overlayCanvas.width !== width || overlayCanvas.height !== height) {
         overlayCanvas.width = width;
@@ -1668,16 +1683,24 @@
       }
     }
 
-    function drawBoundingBoxes(predictions, width, height) {
-      syncCanvasDimensions(width, height);
-      overlayCtx.clearRect(0, 0, width, height);
+    function drawBoundingBoxes(predictions, sourceW, sourceH) {
+      const activeEl = videoEl.style.display !== 'none' ? videoEl : previewImg;
+      const rect = activeEl.getBoundingClientRect();
+      const dispW = rect.width || overlayCanvas.clientWidth || sourceW;
+      const dispH = rect.height || overlayCanvas.clientHeight || sourceH;
+
+      syncCanvasDimensions(dispW, dispH);
+      overlayCtx.clearRect(0, 0, dispW, dispH);
       if (!predictions || !predictions.length) return;
 
+      const scaleX = dispW / sourceW;
+      const scaleY = dispH / sourceH;
+
       for (const p of predictions) {
-        const x1 = p.x1;
-        const y1 = p.y1;
-        const boxW = p.x2 - p.x1;
-        const boxH = p.y2 - p.y1;
+        const x1 = p.x1 * scaleX;
+        const y1 = p.y1 * scaleY;
+        const boxW = (p.x2 - p.x1) * scaleX;
+        const boxH = (p.y2 - p.y1) * scaleY;
 
         // Bounding box border
         overlayCtx.lineWidth = 3;
@@ -1685,13 +1708,13 @@
         overlayCtx.strokeRect(x1, y1, boxW, boxH);
 
         // Semi-transparent box tint
-        overlayCtx.fillStyle = 'rgba(5, 150, 105, 0.15)';
+        overlayCtx.fillStyle = 'rgba(5, 150, 105, 0.2)';
         overlayCtx.fillRect(x1, y1, boxW, boxH);
 
         // Header label badge
         const confPercent = Math.round(p.confidence * 100);
         const text = `AMBULANCE ${confPercent}%`;
-        overlayCtx.font = 'bold 13px "Space Mono", monospace';
+        overlayCtx.font = 'bold 12px "Space Mono", monospace';
         const textWidth = overlayCtx.measureText(text).width;
 
         overlayCtx.fillStyle = '#059669';
@@ -1809,27 +1832,44 @@
         isProcessingFrame = true;
 
         try {
-          const vw = videoEl.videoWidth || 640;
-          const vh = videoEl.videoHeight || 360;
-          offscreenCanvas.width = vw;
-          offscreenCanvas.height = vh;
-          offscreenCtx.drawImage(videoEl, 0, 0, vw, vh);
+          const rawW = videoEl.videoWidth || 640;
+          const rawH = videoEl.videoHeight || 360;
 
-          const dataUrl = offscreenCanvas.toDataURL('image/jpeg', 0.8);
+          // Downscale high-res mobile camera feeds (1080p/4K) to fast 512px size for instant uploads
+          const maxDim = 512;
+          let snapW = rawW;
+          let snapH = rawH;
+          if (rawW > maxDim || rawH > maxDim) {
+            if (rawW >= rawH) {
+              snapW = maxDim;
+              snapH = Math.round((rawH * maxDim) / rawW);
+            } else {
+              snapH = maxDim;
+              snapW = Math.round((rawW * maxDim) / rawH);
+            }
+          }
+
+          offscreenCanvas.width = snapW;
+          offscreenCanvas.height = snapH;
+          offscreenCtx.drawImage(videoEl, 0, 0, snapW, snapH);
+
+          // Fast compact JPEG (~20-30KB)
+          const dataUrl = offscreenCanvas.toDataURL('image/jpeg', 0.65);
           const resp = await fetch('/api/detect_frame', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               image: dataUrl,
-              source: 'Browser Optical Sensor',
-              width: vw,
-              height: vh
+              source: 'Mobile Optical Sensor',
+              width: snapW,
+              height: snapH,
+              confidence: currentConfidence
             })
           });
 
           if (resp.ok) {
             const data = await resp.json();
-            drawBoundingBoxes(data.predictions, vw, vh);
+            drawBoundingBoxes(data.predictions, snapW, snapH);
             refreshStatus();
           }
         } catch (e) {
@@ -1837,7 +1877,7 @@
         } finally {
           isProcessingFrame = false;
         }
-      }, 550);
+      }, 400);
     }
 
     async function triggerSample(kind) {
@@ -1876,7 +1916,8 @@
             image: sampleData.image,
             source: `Benchmark: ${kind}`,
             width: nw,
-            height: nh
+            height: nh,
+            confidence: currentConfidence
           })
         });
 
@@ -1923,7 +1964,8 @@
               image: e.target.result,
               source: `Upload (${file.name})`,
               width: nw,
-              height: nh
+              height: nh,
+              confidence: currentConfidence
             })
           });
 
