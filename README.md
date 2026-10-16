@@ -9,6 +9,22 @@
 - Workspace: `subhan-kalgond`
 - Hosted AI inference is connected directly to Roboflow. When an ambulance appears in the webcam frame, the system detects it, outlines it in green, and turns the traffic signal to **GREEN**.
 
+## Free Render.com Deployment (Live Website)
+1. Push this folder to a GitHub repository:
+   ```bash
+   git remote add origin https://github.com/<your-username>/ambulance-traffic.git
+   git branch -M main
+   git push -u origin main
+   ```
+2. Go to **https://render.com** and sign in.
+3. Click **New +** $\rightarrow$ **Web Service**.
+4. Connect your GitHub repository.
+5. Set:
+   - **Runtime:** `Python 3`
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `gunicorn app:app`
+6. Click **Deploy Web Service**! You'll receive a live public URL.
+
 ## Setup (Windows)
 1. Install Python 3.10 or 3.11 from https://www.python.org/downloads/ and select "Add Python to PATH".
 2. Extract this folder.
